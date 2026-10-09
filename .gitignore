@@ -1,0 +1,90 @@
+# ---- Claude Code (personal) ----
+CLAUDE.local.md
+.claude/settings.local.json
+
+# ---- Secrets and local config ----
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+kubeconfig
+*.kubeconfig
+*.jks
+*.p12
+*.tfvars
+!*.tfvars.example
+
+# ---- Personal notes (never commit) ----
+*.docx
+notes/
+
+# ---- Terraform (if added) ----
+# Commit .terraform.lock.hcl; ignore local state and plugin cache.
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+crash.log
+
+# ---- CI / supply-chain outputs ----
+sbom*.json
+*.sbom.json
+trivy-results.*
+
+# ---- Java / Maven / Gradle ----
+target/
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+.gradle/
+*.class
+*.jar
+!.mvn/wrapper/maven-wrapper.jar
+*.war
+*.log
+hs_err_pid*
+
+# ---- Node / TypeScript ----
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+.vite/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ---- Go ----
+operator/bin/
+*.exe
+*.test
+*.out
+cover.out
+go.work
+go.work.sum
+
+# ---- Kubernetes / local cluster ----
+.kind/
+*.tgz
+
+# ---- Docker volumes and local data ----
+deploy/compose/data/
+.ollama/
+
+# ---- k6 results ----
+load-tests/results/
+
+# ---- IDEs ----
+.idea/
+*.iml
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+*.swp
+*.swo
+
+# ---- OS ----
+.DS_Store
+Thumbs.db
