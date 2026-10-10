@@ -13,7 +13,7 @@ and a Go Kubernetes operator. It deploys with GitOps through ArgoCD.
 
 | Area | Choice |
 | - | - |
-| Backend | Java 25 (LTS), Spring Boot 4.x, Maven wrapper (`./mvnw`). Pin exact versions in `pom.xml`. |
+| Backend | Java 25 (LTS), Spring Boot 4.x, Gradle wrapper (`./gradlew`). Pin exact plugin versions in `build.gradle`. |
 | Database | PostgreSQL with pgvector (relational data and embeddings) |
 | AI | Spring AI, Ollama running a small open-weight model locally, RAG over user documents |
 | Frontend | TypeScript (strict), React + Vite |
@@ -50,7 +50,7 @@ and the dependencies in Docker.
 
 ```bash
 docker compose -f deploy/compose/docker-compose.yml up -d   # Postgres, Ollama
-cd backend && ./mvnw spring-boot:run                        # API on :8080
+cd backend && ./gradlew bootRun                             # API on :8080
 cd frontend && npm install && npm run dev                   # UI on :5173
 ```
 
@@ -61,8 +61,8 @@ TODO: add a `make cluster-up` target once it exists.
 
 ```bash
 # Backend
-cd backend && ./mvnw verify              # unit + integration tests (Testcontainers)
-cd backend && ./mvnw spotless:apply      # format
+cd backend && ./gradlew build            # compile + unit + integration tests (Testcontainers)
+cd backend && ./gradlew bootTestRun      # run the API against a Testcontainers Postgres
 
 # Frontend
 cd frontend && npm run lint && npm test && npm run build
