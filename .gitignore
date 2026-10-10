@@ -18,6 +18,7 @@ kubeconfig
 # ---- Personal notes (never commit) ----
 *.docx
 notes/
+what_I_learned.txt
 
 # ---- Terraform (if added) ----
 # Commit .terraform.lock.hcl; ignore local state and plugin cache.
