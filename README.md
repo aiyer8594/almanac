@@ -38,11 +38,12 @@ flowchart LR
 ## Repository layout
 
 ```
-backend/     Spring Boot API
-docs/adr/    Architecture decision records (planned)
+backend/          Spring Boot API
+deploy/compose/   docker-compose for local dependencies (Postgres)
+docs/adr/         Architecture decision records (planned)
 ```
 
-Planned: `frontend/`, `operator/`, `deploy/` (compose, Kustomize, ArgoCD),
+Planned: `frontend/`, `operator/`, `deploy/k8s/` (Kustomize), `deploy/argocd/`,
 `load-tests/`.
 
 ## Running locally
@@ -67,6 +68,35 @@ Run the tests (also requires Docker):
 cd backend
 ./gradlew test
 ```
+
+### Local Postgres (Docker Compose)
+
+A long-lived Postgres (pgvector) container for local development, using the same
+image as the tests. It binds to `127.0.0.1` only. No secrets are required for local
+development; the values in `.env.example` are local defaults.
+
+Run these from the repository root:
+
+```bash
+cp .env.example .env    # optional: every variable has a default in the compose file
+docker compose --env-file .env -f deploy/compose/docker-compose.yml up -d
+docker compose -f deploy/compose/docker-compose.yml ps    # wait for "(healthy)"
+```
+
+Open a `psql` shell:
+
+```bash
+docker compose -f deploy/compose/docker-compose.yml exec postgres psql -U almanac -d almanac
+```
+
+Stop it (`down -v` also deletes the data volume):
+
+```bash
+docker compose -f deploy/compose/docker-compose.yml down
+```
+
+`POSTGRES_*` values apply only when the data volume is first initialized. After
+changing them in `.env`, recreate the volume with `down -v`.
 
 ## Design decisions
 
