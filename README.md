@@ -40,7 +40,7 @@ flowchart LR
 ```
 backend/          Spring Boot API
 deploy/compose/   docker-compose for local dependencies (Postgres)
-docs/adr/         Architecture decision records (planned)
+docs/adr/         Architecture decision records
 ```
 
 Planned: `frontend/`, `operator/`, `deploy/k8s/` (Kustomize), `deploy/argocd/`,
@@ -104,8 +104,9 @@ Recorded as ADRs in `docs/adr/` as they are made. Decisions that shape the curre
 code:
 
 - **Spring MVC, not WebFlux.** The blocking servlet model keeps code and stack traces
-  simple. With virtual threads (planned), blocking I/O no longer ties up a platform
-  thread per request, which removes the main scaling argument for going reactive.
+  simple. Requests run on virtual threads, so blocking I/O no longer ties up a
+  platform thread per request, which removes the main scaling argument for going
+  reactive. See [ADR 0001](docs/adr/0001-virtual-threads-for-request-handling.md).
 - **Postgres + pgvector for both relational data and embeddings.** One database to
   run, back up, and query transactionally, instead of a separate vector store.
 - **Real Postgres in tests.** Integration tests run against a pgvector container via
