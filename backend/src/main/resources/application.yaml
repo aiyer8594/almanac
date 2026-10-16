@@ -8,3 +8,6 @@ spring:
     url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:almanac}
     username: ${POSTGRES_USER:almanac}
     password: ${POSTGRES_PASSWORD:almanac}
+  jpa:
+    hibernate:
+      ddl-auto: validate
