@@ -23,6 +23,7 @@ and a Go Kubernetes operator. It deploys with GitOps through ArgoCD.
 | Auth (planned) | Spring Security OAuth2 resource server, JWT validation. TODO: choose identity provider. |
 | Observability (planned) | Micrometer + OpenTelemetry, Prometheus, Grafana |
 | CI (planned) | GitHub Actions: build, test, Trivy image scan, Syft SBOM, cosign signing |
+| Infrastructure (planned) | Terraform modules with Terragrunt for GKE and EKS targets |
 
 Rows marked "planned" are not built yet. Don't describe them as existing in docs.
 
@@ -36,6 +37,7 @@ deploy/
   compose/        docker-compose for local dependencies (Postgres, Ollama)
   k8s/            Kustomize base + overlays
   argocd/         ArgoCD Application manifests
+infra/            Terraform modules + Terragrunt live config (planned)
 load-tests/       k6 scripts
 docs/
   adr/            Architecture decision records
