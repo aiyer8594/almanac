@@ -5,9 +5,11 @@ Update the TODOs as decisions are made.
 
 ## What this repo is
 
-A personal life-management app (TODO: name and one-line description), built as a
-small platform: a Java backend, a TypeScript frontend, an AI document-search feature,
-and a Go Kubernetes operator. It deploys with GitOps through ArgoCD.
+Almanac is a self-hosted task manager with natural-language search over your own
+documents, answered by a locally run LLM so the documents never leave your
+infrastructure. It is built as a small platform: a Java backend, a Go Kubernetes
+operator that creates per-pull-request preview environments, GitOps delivery through
+ArgoCD, a scanned and signed supply chain, and Terraform for GKE and EKS.
 
 ## Tech stack
 
@@ -15,11 +17,9 @@ and a Go Kubernetes operator. It deploys with GitOps through ArgoCD.
 | - | - |
 | Backend | Java 25 (LTS), Spring Boot 4.x, Gradle wrapper (`./gradlew`). Pin exact plugin versions in `build.gradle`. |
 | Database | PostgreSQL with pgvector (relational data and embeddings) |
-| AI | Spring AI, Ollama running a small open-weight model locally, RAG over user documents |
-| Frontend | TypeScript (strict), React + Vite |
-| Operator | Go, kubebuilder / controller-runtime |
-| Load tests | k6 (JavaScript) |
-| Deploy | Docker images, Kustomize manifests, ArgoCD |
+| AI (planned) | Spring AI, Ollama running a small open-weight model locally, RAG over user documents |
+| Operator (planned) | Go, kubebuilder / controller-runtime. Manages `PreviewEnvironment` resources (see below). |
+| Deploy (planned) | Docker images, Kustomize manifests, ArgoCD |
 | Auth (planned) | Spring Security OAuth2 resource server, JWT validation. TODO: choose identity provider. |
 | Observability (planned) | Micrometer + OpenTelemetry, Prometheus, Grafana |
 | CI (planned) | GitHub Actions: build, test, Trivy image scan, Syft SBOM, cosign signing |
@@ -31,14 +31,12 @@ Rows marked "planned" are not built yet. Don't describe them as existing in docs
 
 ```
 backend/          Java Spring Boot API (core of the project)
-frontend/         TypeScript web app
 operator/         Go Kubernetes operator (kubebuilder project)
 deploy/
   compose/        docker-compose for local dependencies (Postgres, Ollama)
   k8s/            Kustomize base + overlays
   argocd/         ArgoCD Application manifests
 infra/            Terraform modules + Terragrunt live config (planned)
-load-tests/       k6 scripts
 docs/
   adr/            Architecture decision records
 .github/
@@ -53,7 +51,6 @@ and the dependencies in Docker.
 ```bash
 docker compose -f deploy/compose/docker-compose.yml up -d   # Postgres, Ollama
 cd backend && ./gradlew bootRun                             # API on :8080
-cd frontend && npm install && npm run dev                   # UI on :5173
 ```
 
 Cluster mode (operator and ArgoCD) runs on a local kind cluster.
@@ -66,23 +63,35 @@ TODO: add a `make cluster-up` target once it exists.
 cd backend && ./gradlew build            # compile + unit + integration tests (Testcontainers)
 cd backend && ./gradlew bootTestRun      # run the API against a Testcontainers Postgres
 
-# Frontend
-cd frontend && npm run lint && npm test && npm run build
-
 # Operator
 cd operator && make test                 # envtest-based controller tests
 cd operator && make manifests generate   # regenerate CRDs and deepcopy code
-
-# Load tests
-k6 run load-tests/<script>.js
 ```
+
+## Operator: preview environments (planned)
+
+A cluster-scoped `PreviewEnvironment` resource (`spec.image`, `spec.ttl`) gives one
+image its own short-lived copy of the stack. CI creates one per pull request after the
+image is scanned and signed. Reconcile:
+
+1. Ensure a Namespace `preview-<name>`, owned by the resource.
+2. Ensure an ArgoCD `Application` for `deploy/k8s/overlays/preview` with the image and
+   namespace overridden, owned by the resource. Manifests stay in Kustomize; the
+   operator never renders workloads itself.
+3. Mirror the Application's sync and health into status conditions.
+4. Requeue at `status.expiresAt`; once expired, delete the resource. Garbage
+   collection removes everything it owns.
+
+The resource is cluster-scoped so it can own a Namespace. No finalizer is needed while
+everything it creates is in-cluster and owned; add one only for external resources.
+See ADR 0002.
 
 ## Conventions
 
 ### Java
 - Constructor injection only. No field injection, no Lombok.
 - Records for DTOs and value objects. Sealed interfaces where a type hierarchy is closed.
-- Package by feature (`com.<app>.documents`, `com.<app>.tasks`), not by layer.
+- Package by feature (`io.github.aiyer8594.almanac.tasks`, `...documents`), not by layer.
 - Don't expose JPA entities from controllers. Map them to records.
 - Validate inputs with Bean Validation. Use problem-details (RFC 9457) for error responses.
 - Tests: JUnit 5 and AssertJ. Use Testcontainers for anything touching Postgres. Don't mock the database.
@@ -93,10 +102,6 @@ k6 run load-tests/<script>.js
 - Reconcile must be idempotent. Return errors rather than logging and continuing.
 - Wrap errors with context (`fmt.Errorf("...: %w", err)`).
 - Run `gofmt` / `go vet` before committing.
-
-### TypeScript
-- `strict: true`. No `any` without a comment explaining why.
-- API types come from the backend's OpenAPI spec. TODO: decide on a generation tool.
 
 ### Kubernetes manifests
 - Every workload sets readiness and liveness probes; add a startup probe for anything
