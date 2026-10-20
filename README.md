@@ -1,8 +1,13 @@
 # Almanac
 
-A personal life-management app built as a small platform: a Java backend, a
-TypeScript frontend, AI-assisted search over your own documents, and a Kubernetes
-operator, deployed with GitOps.
+Almanac is a self-hosted task manager with natural-language search over your own
+documents, answered by a locally run LLM so the documents never leave your
+infrastructure.
+
+It is built as a small production-style platform: a Spring Boot API secured as an
+OAuth2 resource server, a Go Kubernetes operator that creates per-pull-request preview
+environments with a TTL, GitOps delivery through ArgoCD, a scanned and signed supply
+chain, and Terraform for GKE and EKS.
 
 > **Status:** early development. The Spring Boot backend is scaffolded; the other
 > components below are planned. Sections marked *planned* describe intended design,
@@ -14,26 +19,29 @@ Target architecture (most components planned):
 
 ```mermaid
 flowchart LR
-    user([Browser]) --> fe[Frontend<br/>React + Vite]
-    fe -->|REST / JSON| be[Backend<br/>Spring Boot 4, Java 25]
+    client([API client]) -->|REST / JSON + JWT| be[Backend<br/>Spring Boot 4, Java 25]
+    idp[OIDC provider] -.->|signing keys| be
     be --> pg[(PostgreSQL<br/>+ pgvector)]
     be -->|embeddings, chat| ollama[Ollama<br/>local model]
 
+    ci[CI<br/>build, scan, SBOM, sign] -->|PreviewEnvironment| op
     subgraph cluster [Kubernetes]
-        argocd[ArgoCD] -->|syncs| k8s[Kustomize manifests]
-        op[Almanac operator<br/>Go] -->|reconciles| k8s
+        op[Operator<br/>Go] -->|Namespace + Application| argocd[ArgoCD]
+        argocd -->|syncs| k8s[Kustomize manifests]
     end
 ```
 
 | Component | Stack | Status |
 | - | - | - |
-| Backend API | Java 25, Spring Boot 4 (Spring MVC), Spring Data JPA, Flyway, Mustache | Scaffolded |
+| Backend API | Java 25, Spring Boot 4 (Spring MVC), Spring Data JPA, Flyway | Scaffolded |
 | Database | PostgreSQL 17 with pgvector | Used in tests via Testcontainers |
 | Document search | Spring AI, Ollama, RAG over user documents | Planned |
-| Frontend | TypeScript (strict), React, Vite | Planned |
-| Operator | Go, kubebuilder / controller-runtime | Planned |
+| Auth | Spring Security OAuth2 resource server (JWT) | Planned |
+| Operator | Go, kubebuilder / controller-runtime; per-PR preview environments with a TTL | Planned |
 | Deployment | Docker, Kustomize, ArgoCD on a local kind cluster | Planned |
-| Load tests | k6 | Planned |
+| CI | GitHub Actions: Trivy scan, Syft SBOM, cosign signing | Planned |
+| Observability | Micrometer, OpenTelemetry, Prometheus, Grafana | Planned |
+| Infrastructure | Terraform + Terragrunt for GKE and EKS | Planned |
 
 ## Repository layout
 
@@ -43,8 +51,8 @@ deploy/compose/   docker-compose for local dependencies (Postgres)
 docs/adr/         Architecture decision records
 ```
 
-Planned: `frontend/`, `operator/`, `deploy/k8s/` (Kustomize), `deploy/argocd/`,
-`load-tests/`.
+Planned: `operator/`, `deploy/k8s/` (Kustomize), `deploy/argocd/`, `infra/`
+(Terraform + Terragrunt), `.github/workflows/`.
 
 ## Running locally
 
@@ -113,6 +121,9 @@ code:
   Testcontainers rather than an in-memory substitute, so migrations and queries are
   tested against the same engine used in production.
 - **Schema managed by Flyway.** Versioned SQL migrations, applied at startup.
+- **Preview environments through an operator, delivered by ArgoCD** (planned). The operator
+  owns the lifecycle (namespace, TTL, status); ArgoCD owns the manifests. See
+  [ADR 0002](docs/adr/0002-operator-managed-preview-environments.md).
 
 ## License
 
