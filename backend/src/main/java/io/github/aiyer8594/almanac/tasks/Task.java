@@ -90,6 +90,18 @@ public class Task {
 		transitionTo(TaskStatus.TODO);
 	}
 
+	/**
+	 * Moves this task to {@code target} if {@link TaskStatus#canTransitionTo} allows it.
+	 * For example, a {@code TODO} task can be started ({@code TODO -> IN_PROGRESS}), but a
+	 * {@code DONE} task must be reopened before it can be started again
+	 * ({@code DONE -> IN_PROGRESS} is rejected). Same-state moves are rejected too, so a
+	 * caller acting on stale state gets an error instead of a silent no-op.
+	 *
+	 * <p>This only changes the field in memory. The row is updated when the surrounding
+	 * transaction commits and Hibernate detects the change.
+	 *
+	 * @throws InvalidStatusTransitionException if the transition is not allowed
+	 */
 	private void transitionTo(TaskStatus target) {
 		if (!status.canTransitionTo(target)) {
 			throw new InvalidStatusTransitionException(id, status, target);
