@@ -6,9 +6,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import org.junit.jupiter.api.Test;
 
 /**
- * Covers the intent methods on {@link Task}. The full transition table is in
- * {@link TaskStatusTest}; this checks that each method applies the allowed move and that
- * a rejected move throws without changing the status.
+ * Covers the intent methods on {@link Task} and its required title. The full transition
+ * table is in {@link TaskStatusTest}; this checks that each method applies the allowed
+ * move and that a rejected move throws without changing the status.
  */
 class TaskTest {
 
@@ -17,6 +17,23 @@ class TaskTest {
 		Task task = new Task("Write tests", null, null);
 
 		assertThat(task.getStatus()).isEqualTo(TaskStatus.TODO);
+	}
+
+	@Test
+	void constructorRejectsNullTitle() {
+		assertThatThrownBy(() -> new Task(null, null, null))
+			.isInstanceOf(NullPointerException.class)
+			.hasMessage("title");
+	}
+
+	@Test
+	void changeDetailsRejectsNullTitleAndKeepsExistingTitle() {
+		Task task = new Task("Write tests", null, null);
+
+		assertThatThrownBy(() -> task.changeDetails(null, null, null))
+			.isInstanceOf(NullPointerException.class)
+			.hasMessage("title");
+		assertThat(task.getTitle()).isEqualTo("Write tests");
 	}
 
 	@Test
