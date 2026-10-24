@@ -51,7 +51,7 @@ Deployments itself, so the Kustomize overlay remains the single source of truth.
   cluster-scoped Namespace. Cleanup then relies on garbage collection alone.
 - No finalizer is needed while everything the operator creates is in-cluster and
   owned. A finalizer becomes necessary if a preview environment ever provisions
-  something outside the cluster, such as a managed database (Cloud SQL, RDS).
+  something outside the cluster, such as a managed RDS database.
 - Each environment gets its own Postgres, so migrations run against an empty database
   every time. Seeding test data is a separate, later decision.
 - The operator depends on the ArgoCD `Application` API. It reads and writes that type

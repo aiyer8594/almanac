@@ -7,7 +7,7 @@ infrastructure.
 It is built as a small production-style platform: a Spring Boot API secured as an
 OAuth2 resource server, a Go Kubernetes operator that creates per-pull-request preview
 environments with a TTL, GitOps delivery through ArgoCD, a scanned and signed supply
-chain, and Terraform for GKE and EKS.
+chain, and Terraform for AWS EKS.
 
 > **Status:** early development. The Spring Boot backend is scaffolded; the other
 > components below are planned. Sections marked *planned* describe intended design,
@@ -41,7 +41,7 @@ flowchart LR
 | Deployment | Docker, Kustomize, ArgoCD on a local kind cluster | Planned |
 | CI | GitHub Actions: Trivy scan, Syft SBOM, cosign signing | Planned |
 | Observability | Micrometer, OpenTelemetry, Prometheus, Grafana | Planned |
-| Infrastructure | Terraform + Terragrunt for GKE and EKS | Planned |
+| Infrastructure | Terraform for AWS (EKS, ECR, IAM) | Planned |
 
 ## Repository layout
 
@@ -52,7 +52,7 @@ docs/adr/         Architecture decision records
 ```
 
 Planned: `operator/`, `deploy/k8s/` (Kustomize), `deploy/argocd/`, `infra/`
-(Terraform + Terragrunt), `.github/workflows/`.
+(Terraform for AWS), `.github/workflows/`.
 
 ## Running locally
 
@@ -124,6 +124,10 @@ code:
 - **Preview environments through an operator, delivered by ArgoCD** (planned). The operator
   owns the lifecycle (namespace, TTL, status); ArgoCD owns the manifests. See
   [ADR 0002](docs/adr/0002-operator-managed-preview-environments.md).
+- **One cloud target, AWS** (planned). Workloads are cloud-agnostic, so a second
+  cloud would double the infrastructure code without exercising anything new. Plain
+  Terraform for EKS, ECR, and IAM, one root per environment. See
+  [ADR 0003](docs/adr/0003-single-cloud-target-aws.md).
 
 ## License
 

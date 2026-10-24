@@ -9,7 +9,7 @@ Almanac is a self-hosted task manager with natural-language search over your own
 documents, answered by a locally run LLM so the documents never leave your
 infrastructure. It is built as a small platform: a Java backend, a Go Kubernetes
 operator that creates per-pull-request preview environments, GitOps delivery through
-ArgoCD, a scanned and signed supply chain, and Terraform for GKE and EKS.
+ArgoCD, a scanned and signed supply chain, and Terraform for AWS EKS.
 
 ## Tech stack
 
@@ -23,7 +23,7 @@ ArgoCD, a scanned and signed supply chain, and Terraform for GKE and EKS.
 | Auth (planned) | Spring Security OAuth2 resource server, JWT validation. TODO: choose identity provider. |
 | Observability (planned) | Micrometer + OpenTelemetry, Prometheus, Grafana |
 | CI (planned) | GitHub Actions: build, test, Trivy image scan, Syft SBOM, cosign signing |
-| Infrastructure (planned) | Terraform modules with Terragrunt for GKE and EKS targets |
+| Infrastructure (planned) | Terraform modules for an AWS EKS target, one root per environment. See ADR 0003. |
 
 Rows marked "planned" are not built yet. Don't describe them as existing in docs.
 
@@ -36,7 +36,7 @@ deploy/
   compose/        docker-compose for local dependencies (Postgres, Ollama)
   k8s/            Kustomize base + overlays
   argocd/         ArgoCD Application manifests
-infra/            Terraform modules + Terragrunt live config (planned)
+infra/            Terraform modules + per-environment roots for AWS (planned)
 docs/
   adr/            Architecture decision records
 .github/
