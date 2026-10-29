@@ -22,7 +22,7 @@ ArgoCD, a scanned and signed supply chain, and Terraform for AWS EKS.
 | Deploy (planned) | Docker images, Kustomize manifests, ArgoCD |
 | Auth (planned) | Spring Security OAuth2 resource server, JWT validation. TODO: choose identity provider. |
 | Observability (planned) | Micrometer + OpenTelemetry, Prometheus, Grafana |
-| CI (planned) | GitHub Actions: build, test, Trivy image scan, Syft SBOM, cosign signing |
+| CI/CD (planned) | GitHub Actions for CI and promotion; ArgoCD for delivery. Trivy, Syft SBOM, cosign keyless signing, GHCR. See ADR 0004. |
 | Infrastructure (planned) | Terraform modules for an AWS EKS target, one root per environment. See ADR 0003. |
 
 Rows marked "planned" are not built yet. Don't describe them as existing in docs.
@@ -40,7 +40,7 @@ infra/            Terraform modules + per-environment roots for AWS (planned)
 docs/
   adr/            Architecture decision records
 .github/
-  workflows/      CI pipelines (planned)
+  workflows/      CI/CD workflows (planned)
 ```
 
 ## Running locally
@@ -71,8 +71,8 @@ cd operator && make manifests generate   # regenerate CRDs and deepcopy code
 ## Operator: preview environments (planned)
 
 A cluster-scoped `PreviewEnvironment` resource (`spec.image`, `spec.ttl`) gives one
-image its own short-lived copy of the stack. CI creates one per pull request after the
-image is scanned and signed. Reconcile:
+image its own short-lived copy of the stack. On every pull request, CI creates one on a
+kind cluster inside the runner after the image is scanned (ADR 0004). Reconcile:
 
 1. Ensure a Namespace `preview-<name>`, owned by the resource.
 2. Ensure an ArgoCD `Application` for `deploy/k8s/overlays/preview` with the image and
@@ -85,6 +85,31 @@ image is scanned and signed. Reconcile:
 The resource is cluster-scoped so it can own a Namespace. No finalizer is needed while
 everything it creates is in-cluster and owned; add one only for external resources.
 See ADR 0002.
+
+## CI/CD (planned)
+
+GitHub Actions runs CI and promotion; ArgoCD pulls from Git and deploys. CI never
+holds cluster credentials. See ADR 0004.
+
+| Workflow | Trigger | Does |
+| - | - | - |
+| `backend.yml` | PR, push to `main` (`backend/**`) | Gradle build + Testcontainers tests, then the image workflow |
+| `operator.yml` | PR, push to `main` (`operator/**`) | gofmt, go vet, golangci-lint, envtest, generated-code drift check, then the image workflow |
+| `image.yml` | `workflow_call` only | Buildx build, Trivy scan, Syft SBOM. On `main`: push to GHCR, cosign sign, provenance |
+| `manifests.yml` | PR (`deploy/**`) | `kustomize build` every overlay, kubeconform |
+| `preview.yml` | PR | kind in the runner, ArgoCD + operator, apply a `PreviewEnvironment`, wait Ready, smoke test |
+| `promote.yml` | image published from `main` | Open a PR pinning the new digest in the cluster overlay |
+| `release.yml` | tag `v*` | Semver image tag, GitHub Release with SBOM |
+| `infra.yml` | PR (`infra/**`) | `terraform fmt`/`validate`, tflint, Trivy config scan |
+
+Rules for every workflow:
+- Top-level `permissions: contents: read`; jobs add only what they need
+  (`packages: write`, `id-token: write`, `pull-requests: write`).
+- Pin third-party actions to a full commit SHA with the version in a comment.
+  Dependabot updates actions, Gradle, and Go modules.
+- Use `pull_request`, never `pull_request_target`. No self-hosted runners (public repo).
+- No long-lived cloud or cluster credentials in secrets. AWS uses GitHub OIDC.
+- Set `concurrency` so a new push cancels the previous run on the same PR.
 
 ## Conventions
 

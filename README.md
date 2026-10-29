@@ -24,11 +24,13 @@ flowchart LR
     be --> pg[(PostgreSQL<br/>+ pgvector)]
     be -->|embeddings, chat| ollama[Ollama<br/>local model]
 
-    ci[CI<br/>build, scan, SBOM, sign] -->|PreviewEnvironment| op
+    ci[GitHub Actions<br/>build, scan, SBOM, sign] -->|signed image| ghcr[(GHCR)]
+    ci -->|promotion PR| git[(Git)]
     subgraph cluster [Kubernetes]
         op[Operator<br/>Go] -->|Namespace + Application| argocd[ArgoCD]
         argocd -->|syncs| k8s[Kustomize manifests]
     end
+    argocd -->|pulls| git
 ```
 
 | Component | Stack | Status |
@@ -39,7 +41,7 @@ flowchart LR
 | Auth | Spring Security OAuth2 resource server (JWT) | Planned |
 | Operator | Go, kubebuilder / controller-runtime; per-PR preview environments with a TTL | Planned |
 | Deployment | Docker, Kustomize, ArgoCD on a local kind cluster | Planned |
-| CI | GitHub Actions: Trivy scan, Syft SBOM, cosign signing | Planned |
+| CI/CD | GitHub Actions: per-component checks, Trivy scan, Syft SBOM, cosign signing, preview environment test on kind, promotion by pull request | Planned |
 | Observability | Micrometer, OpenTelemetry, Prometheus, Grafana | Planned |
 | Infrastructure | Terraform for AWS (EKS, ECR, IAM) | Planned |
 
@@ -124,6 +126,12 @@ code:
 - **Preview environments through an operator, delivered by ArgoCD** (planned). The operator
   owns the lifecycle (namespace, TTL, status); ArgoCD owns the manifests. See
   [ADR 0002](docs/adr/0002-operator-managed-preview-environments.md).
+- **GitHub Actions for CI and promotion, ArgoCD for delivery** (planned). Every pull
+  request builds, scans, and runs the backend in a preview environment on a kind
+  cluster inside the runner. Images from `main` are signed with cosign keyless
+  signing and promoted by a pull request that pins the new digest; ArgoCD syncs the
+  merge. CI never holds cluster credentials. See
+  [ADR 0004](docs/adr/0004-ci-cd-on-github-actions.md).
 - **One cloud target, AWS** (planned). Workloads are cloud-agnostic, so a second
   cloud would double the infrastructure code without exercising anything new. Plain
   Terraform for EKS, ECR, and IAM, one root per environment. See
