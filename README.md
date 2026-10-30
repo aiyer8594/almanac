@@ -9,8 +9,8 @@ OAuth2 resource server, a Go Kubernetes operator that creates per-pull-request p
 environments with a TTL, GitOps delivery through ArgoCD, a scanned and signed supply
 chain, and Terraform for AWS EKS.
 
-> **Status:** early development. The Spring Boot backend is scaffolded; the other
-> components below are planned. Sections marked *planned* describe intended design,
+> **Status:** early development. The backend's `tasks` domain model and schema are in
+> place, with the REST API in progress; the other components below are planned. Sections marked *planned* describe intended design,
 > not working code.
 
 ## Architecture
@@ -35,7 +35,7 @@ flowchart LR
 
 | Component | Stack | Status |
 | - | - | - |
-| Backend API | Java 25, Spring Boot 4 (Spring MVC), Spring Data JPA, Flyway | Scaffolded |
+| Backend API | Java 25, Spring Boot 4 (Spring MVC), Spring Data JPA, Flyway | In progress |
 | Database | PostgreSQL 17 with pgvector | Used in tests via Testcontainers |
 | Document search | Spring AI, Ollama, RAG over user documents | Planned |
 | Auth | Spring Security OAuth2 resource server (JWT) | Planned |
@@ -48,7 +48,7 @@ flowchart LR
 ## Repository layout
 
 ```
-backend/          Spring Boot API
+backend/          Spring Boot API (see backend/README.md)
 deploy/compose/   docker-compose for local dependencies (Postgres)
 docs/adr/         Architecture decision records
 ```
