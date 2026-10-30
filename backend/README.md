@@ -3,9 +3,8 @@
 The Almanac API: a Spring Boot 4 application on Java 25, using Spring MVC with
 virtual threads, Spring Data JPA, and Flyway on PostgreSQL with pgvector.
 
-**Status:** the `tasks` domain model and schema are in place (entity, status
-transitions, migrations, unit tests). The repository, service, and REST endpoints
-are in progress.
+**Status:** the `tasks` REST API is in place, backed by Postgres. It has no
+authentication yet.
 
 ## Prerequisites
 
@@ -73,12 +72,28 @@ Packaged by feature under `io.github.aiyer8594.almanac`:
 
 | Package | Contents |
 | - | - |
-| `tasks` | `Task` entity, `TaskStatus` and its transition rules, `InvalidStatusTransitionException` |
+| `tasks` | REST controller, service, repository, `Task` entity, `TaskStatus` and its transition rules, exception mapping |
 | `hello` | Smoke-test endpoint (`GET /hello`) |
 
 A task moves `TODO` → `IN_PROGRESS` or `DONE`, `IN_PROGRESS` → `DONE`, and
 `DONE` → `TODO`. Any other transition, including one to the current status, throws
 `InvalidStatusTransitionException`. `Task` carries a `@Version` field, so concurrent
 updates to the same task fail instead of overwriting each other.
+
+## API
+
+| Method and path | Does | Success |
+| - | - | - |
+| `GET /api/tasks` | List tasks; takes `page`, `size` (max 100), `sort` | 200 |
+| `POST /api/tasks` | Create a task | 201 with `Location` |
+| `GET /api/tasks/{id}` | Read a task | 200 |
+| `PUT /api/tasks/{id}` | Replace title, description, and due date | 200 |
+| `POST /api/tasks/{id}/start` | Move to `IN_PROGRESS` | 200 |
+| `POST /api/tasks/{id}/done` | Move to `DONE` | 200 |
+| `POST /api/tasks/{id}/reopen` | Move to `TODO` | 200 |
+| `DELETE /api/tasks/{id}` | Delete a task | 204 |
+
+Errors are RFC 9457 problem details: 400 for invalid input, 404 for an unknown task,
+and 409 for a disallowed status transition or a concurrent update.
 
 Design decisions that affect the backend are recorded in [`docs/adr`](../docs/adr).
