@@ -9,9 +9,9 @@ OAuth2 resource server, a Go Kubernetes operator that creates per-pull-request p
 environments with a TTL, GitOps delivery through ArgoCD, a scanned and signed supply
 chain, and Terraform for AWS EKS.
 
-> **Status:** early development. The backend's `tasks` domain model and schema are in
-> place, with the REST API in progress; the other components below are planned. Sections marked *planned* describe intended design,
-> not working code.
+> **Status:** early development. The `tasks` REST API is complete and tested against
+> Postgres, and CI runs on every pull request; the other components below are planned.
+> Sections marked *planned* describe intended design, not working code.
 
 ## Architecture
 
@@ -41,7 +41,7 @@ flowchart LR
 | Auth | Spring Security OAuth2 resource server (JWT) | Planned |
 | Operator | Go, kubebuilder / controller-runtime; per-PR preview environments with a TTL | Planned |
 | Deployment | Docker, Kustomize, ArgoCD on a local kind cluster | Planned |
-| CI/CD | GitHub Actions: per-component checks, Trivy scan, Syft SBOM, cosign signing, preview environment test on kind, promotion by pull request | Planned |
+| CI/CD | GitHub Actions: per-component checks, Trivy scan, Syft SBOM, cosign signing, preview environment test on kind, promotion by pull request | Backend checks in place; the rest planned |
 | Observability | Micrometer, OpenTelemetry, Prometheus, Grafana | Planned |
 | Infrastructure | Terraform for AWS (EKS, ECR, IAM) | Planned |
 
@@ -51,10 +51,11 @@ flowchart LR
 backend/          Spring Boot API (see backend/README.md)
 deploy/compose/   docker-compose for local dependencies (Postgres)
 docs/adr/         Architecture decision records
+.github/workflows/  CI workflows
 ```
 
 Planned: `operator/`, `deploy/k8s/` (Kustomize), `deploy/argocd/`, `infra/`
-(Terraform for AWS), `.github/workflows/`.
+(Terraform for AWS).
 
 ## Running locally
 
