@@ -49,7 +49,7 @@ flowchart LR
 
 ```
 backend/          Spring Boot API (see backend/README.md)
-deploy/compose/   docker-compose for local dependencies (Postgres)
+deploy/compose/   docker-compose for local dependencies (Postgres, Ollama)
 docs/adr/         Architecture decision records
 .github/workflows/  CI workflows
 ```
@@ -108,6 +108,22 @@ docker compose -f deploy/compose/docker-compose.yml down
 
 `POSTGRES_*` values apply only when the data volume is first initialized. After
 changing them in `.env`, recreate the volume with `down -v`.
+
+### Local Ollama (Docker Compose)
+
+The same `up -d` also starts Ollama, bound to `127.0.0.1` only. The one-shot
+`ollama-pull` service downloads the models set in `.env` (several GB on first run)
+and then exits. The backend does not call Ollama yet.
+
+Check that the download finished and the models are available:
+
+```bash
+docker compose -f deploy/compose/docker-compose.yml logs -f ollama-pull
+curl -s localhost:11434/api/tags
+```
+
+Docker on macOS has no access to the Apple GPU, so Ollama runs on the CPU here.
+Embeddings are usable, but expect slow chat responses.
 
 ## Design decisions
 
