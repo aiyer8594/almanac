@@ -23,5 +23,38 @@ services:
       retries: 10
       start_period: 10s
 
+  ollama:
+    image: ollama/ollama:0.40.11
+    ports:
+      # Bind to loopback only; Ollama has no authentication of its own.
+      - "127.0.0.1:${OLLAMA_PORT:-11434}:11434"
+    volumes:
+      # Models are several GB; keep them across container recreation.
+      - ollama-data:/root/.ollama
+    healthcheck:
+      # The CLI calls the server's API, so this fails until the server is up.
+      test: ["CMD", "ollama", "list"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+
+  # One-shot: downloads the models, then exits. The ollama image ships with none,
+  # and pulling a model that is already present is a quick no-op.
+  ollama-pull:
+    image: ollama/ollama:0.40.11
+    depends_on:
+      ollama:
+        condition: service_healthy
+    environment:
+      OLLAMA_HOST: ollama:11434
+      OLLAMA_EMBEDDING_MODEL: ${OLLAMA_EMBEDDING_MODEL:-nomic-embed-text}
+      OLLAMA_CHAT_MODEL: ${OLLAMA_CHAT_MODEL:-llama3.2:3b}
+    entrypoint:
+      - /bin/sh
+      - -c
+      - ollama pull "$${OLLAMA_EMBEDDING_MODEL}" && ollama pull "$${OLLAMA_CHAT_MODEL}"
+
 volumes:
   postgres-data:
+  ollama-data:

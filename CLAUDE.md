@@ -33,7 +33,7 @@ Rows marked "planned" are not built yet. Don't describe them as existing in docs
 backend/          Java Spring Boot API (core of the project)
 operator/         Go Kubernetes operator (kubebuilder project)
 deploy/
-  compose/        docker-compose for local dependencies (Postgres; Ollama planned)
+  compose/        docker-compose for local dependencies (Postgres, Ollama)
   k8s/            Kustomize base + overlays
   argocd/         ArgoCD Application manifests
 infra/            Terraform modules + per-environment roots for AWS (planned)
@@ -49,7 +49,7 @@ Local development does not need Kubernetes. Run the backend as a plain Java proc
 and the dependencies in Docker.
 
 ```bash
-docker compose -f deploy/compose/docker-compose.yml up -d   # Postgres (Ollama planned)
+docker compose -f deploy/compose/docker-compose.yml up -d   # Postgres, Ollama
 cd backend && ./gradlew bootRun                             # API on :8080
 ```
 
