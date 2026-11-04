@@ -37,13 +37,28 @@ flowchart LR
 | - | - | - |
 | Backend API | Java 25, Spring Boot 4 (Spring MVC), Spring Data JPA, Flyway | In progress |
 | Database | PostgreSQL 17 with pgvector | Used in tests via Testcontainers |
-| Document search | Spring AI, Ollama, RAG over user documents | Planned |
+| Document search | Spring AI, Ollama, RAG over user documents | Designed ([ADR 0005](docs/adr/0005-document-search-with-spring-ai-and-pgvector.md)); not built |
 | Auth | Spring Security OAuth2 resource server (JWT) | Planned |
 | Operator | Go, kubebuilder / controller-runtime; per-PR preview environments with a TTL | Planned |
 | Deployment | Docker, Kustomize, ArgoCD on a local kind cluster | Planned |
 | CI/CD | GitHub Actions: per-component checks, Trivy scan, Syft SBOM, cosign signing, preview environment test on kind, promotion by pull request | Backend checks in place; the rest planned |
 | Observability | Micrometer, OpenTelemetry, Prometheus, Grafana | Planned |
 | Infrastructure | Terraform for AWS (EKS, ECR, IAM) | Planned |
+
+### Roadmap
+
+Built in this order, each piece merged with its tests and docs before the next starts:
+
+1. **Document search** (next): ingestion, retrieval, and answers over pgvector with a
+   local Ollama model.
+2. **Container image pipeline**: Dockerfile, plus a reusable workflow that scans the
+   image, generates an SBOM, and on `main` publishes and signs it.
+3. **Kubernetes manifests and ArgoCD**: Kustomize base and overlays for a local kind
+   cluster, including Postgres as a single-replica StatefulSet.
+4. **Operator and preview environments**: the Go operator, and a pull request job that
+   tests a preview environment on kind inside the runner.
+5. **Auth and observability**: JWT resource server, metrics and traces.
+6. **Terraform for AWS**: EKS, ECR, and IAM, validated with `plan`.
 
 ## Repository layout
 
@@ -140,6 +155,10 @@ code:
   Testcontainers rather than an in-memory substitute, so migrations and queries are
   tested against the same engine used in production.
 - **Schema managed by Flyway.** Versioned SQL migrations, applied at startup.
+- **Document search on Spring AI and pgvector** (planned). A pinned local embedding
+  model, a vector table created by Flyway rather than by the library, and an owner on
+  every document so retrieval is scoped per user before auth exists. See
+  [ADR 0005](docs/adr/0005-document-search-with-spring-ai-and-pgvector.md).
 - **Preview environments through an operator, delivered by ArgoCD** (planned). The operator
   owns the lifecycle (namespace, TTL, status); ArgoCD owns the manifests. See
   [ADR 0002](docs/adr/0002-operator-managed-preview-environments.md).
