@@ -4,7 +4,7 @@ Almanac is a self-hosted task manager with natural-language search over your own
 documents, answered by a locally run LLM so the documents never leave your
 infrastructure.
 
-It is built as a small production-style platform: a Spring Boot API secured as an
+It is designed as a small production-style platform: a Spring Boot API secured as an
 OAuth2 resource server, a Go Kubernetes operator that creates per-pull-request preview
 environments with a TTL, GitOps delivery through ArgoCD, a scanned and signed supply
 chain, and Terraform for AWS EKS.
@@ -36,7 +36,7 @@ flowchart LR
 | Component | Stack | Status |
 | - | - | - |
 | Backend API | Java 25, Spring Boot 4 (Spring MVC), Spring Data JPA, Flyway | In progress |
-| Database | PostgreSQL 17 with pgvector | Used in tests via Testcontainers |
+| Database | PostgreSQL 17 with pgvector | Testcontainers in tests; Docker Compose for local development |
 | Document search | Spring AI, Ollama, RAG over user documents | Designed ([ADR 0005](docs/adr/0005-document-search-with-spring-ai-and-pgvector.md)); not built |
 | Auth | Spring Security OAuth2 resource server (JWT) | Planned |
 | Operator | Go, kubebuilder / controller-runtime; per-PR preview environments with a TTL | Planned |
